@@ -1,0 +1,119 @@
+{
+  "mcpServers": {
+    "naming-checker": {
+      "command": "./naming",
+      "args": ["${input}", "--stdout"],
+      "env": {
+        "PATH": "${env:PATH}"
+      },
+      "description": "Kiểm tra định danh một từ tiếng Anh cho Rust code",
+      "capabilities": {
+        "tools": [
+          {
+            "name": "check_naming",
+            "description": "Kiểm tra vi phạm định danh trong thư mục hoặc file Rust",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Đường dẫn đến thư mục hoặc file cần kiểm tra"
+                },
+                "format": {
+                  "type": "string",
+                  "enum": ["stdout", "report"],
+                  "default": "stdout",
+                  "description": "Format output: stdout cho danh sách vi phạm, report cho báo cáo chi tiết"
+                }
+              },
+              "required": ["path"]
+            }
+          }
+        ]
+      },
+      "settings": {
+        "autoCheck": true,
+        "checkOnSave": true,
+        "excludePatterns": [
+          "target/**",
+          "**/node_modules/**",
+          "**/.git/**"
+        ],
+        "severityLevels": {
+          "snake_case": "error",
+          "PascalCase": "warning",
+          "SCREAMING_SNAKE_CASE": "error",
+          "Duplicate": "info"
+        }
+      }
+    }
+  },
+  "rules": {
+    "naming": {
+      "description": "Quy tắc định danh một từ tiếng Anh cho Guardian project",
+      "enabled": true,
+      "severity": "error",
+      "patterns": {
+        "snake_case": {
+          "pattern": "[a-z]+_[a-z]+",
+          "message": "Định danh phải là một từ tiếng Anh, không sử dụng snake_case"
+        },
+        "PascalCase": {
+          "pattern": "[A-Z][a-z]+[A-Z][a-z]+",
+          "message": "Định danh phải là một từ tiếng Anh, không sử dụng PascalCase"
+        },
+        "SCREAMING_SNAKE_CASE": {
+          "pattern": "[A-Z]+_[A-Z]+",
+          "message": "Hằng số phải là một từ tiếng Anh, không sử dụng SCREAMING_SNAKE_CASE"
+        }
+      },
+      "exceptions": {
+        "allowed_snake_case": [
+          "file_name",
+          "line_number",
+          "column_number"
+        ],
+        "allowed_pascal_case": [
+          "String",
+          "Vec",
+          "Result",
+          "Option"
+        ]
+      }
+    }
+  },
+  "commands": {
+    "check-naming": {
+      "title": "Check Naming Violations",
+      "command": "./naming",
+      "args": ["${workspaceFolder}", "--stdout"],
+      "group": "guardian",
+      "description": "Kiểm tra vi phạm định danh trong toàn bộ workspace"
+    },
+    "check-naming-report": {
+      "title": "Generate Naming Report",
+      "command": "./naming",
+      "args": ["${workspaceFolder}", "--report"],
+      "group": "guardian",
+      "description": "Tạo báo cáo chi tiết về vi phạm định danh"
+    },
+    "check-naming-crate": {
+      "title": "Check Crate Naming",
+      "command": "./naming",
+      "args": ["${fileDirname}", "--stdout"],
+      "group": "guardian",
+      "description": "Kiểm tra vi phạm định danh trong crate hiện tại"
+    }
+  },
+  "keybindings": {
+    "ctrl+shift+n": "check-naming",
+    "ctrl+shift+r": "check-naming-report"
+  },
+  "statusBar": {
+    "naming": {
+      "text": "$(check) Naming",
+      "tooltip": "Click to check naming violations",
+      "command": "check-naming"
+    }
+  }
+} 
