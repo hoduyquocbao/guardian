@@ -1,13 +1,13 @@
 //! Layout definition parsing for guardian-macros
 
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::TokenStream as Tokens;
 use syn::{
     parse2,
     Ident, ItemStruct, Type, TypePath,
 };
 
-use crate::error::{new_error, Error};
+use crate::error::{fault, Error};
 
 /// Endianness specification
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -69,10 +69,10 @@ pub struct Layout {
 impl Layout {
     /// Parse attribute and item tokens into a Layout
     pub fn parse(attr: TokenStream, item: TokenStream) -> Result<Self, Error> {
-        let attributes = Self::parse_attributes(attr)?;
-        let item_tokens: TokenStream2 = item.into();
+        let attributes = Self::parse_attrs(attr)?;
+        let item_tokens: Tokens = item.into();
         let item_struct = parse2::<ItemStruct>(item_tokens.clone())
-            .map_err(|e| new_error(&item_tokens, &format!("Failed to parse struct: {}", e)))?;
+            .map_err(|e| fault(&item_tokens, &format!("Failed to parse struct: {}", e)))?;
         
         let mut fields = Vec::new();
         for field in item_struct.fields {
@@ -88,7 +88,7 @@ impl Layout {
     }
     
     /// Parse frame attributes
-    fn parse_attributes(_attr: TokenStream) -> Result<Attributes, Error> {
+    fn parse_attrs(_attr: TokenStream) -> Result<Attributes, Error> {
         // Simplified attribute parsing for now
         // TODO: Implement proper attribute parsing
         Ok(Attributes::default())
@@ -98,15 +98,15 @@ impl Layout {
     fn parse_field(field: syn::Field, default_endian: &Endian) -> Result<Field, Error> {
         let name = field.ident
             .clone()
-            .ok_or_else(|| new_error(&field, "Field must have a name"))?;
+            .ok_or_else(|| fault(&field, "Field must have a name"))?;
         
-        let kind = Self::parse_field_type(&field.ty, default_endian)?;
+        let kind = Self::parse_type(&field.ty, default_endian)?;
         
         Ok(Field { name, kind })
     }
     
     /// Parse field type to determine kind
-    fn parse_field_type(ty: &Type, default_endian: &Endian) -> Result<Kind, Error> {
+    fn parse_type(ty: &Type, default_endian: &Endian) -> Result<Kind, Error> {
         match ty {
             Type::Path(TypePath { path, .. }) => {
                 let segments = &path.segments;
@@ -116,7 +116,7 @@ impl Layout {
                     let ident_str = ident.to_string();
                     
                     // Handle integer types
-                    if let Some((bits, signed, endian_override)) = Self::parse_integer_type(&ident_str) {
+                    if let Some((bits, signed, endian_override)) = Self::parse_int(&ident_str) {
                         return Ok(Kind::Integer {
                             bits,
                             signed,
@@ -126,12 +126,12 @@ impl Layout {
                     
                     // Handle str(n) syntax
                     if ident_str.starts_with("str") {
-                        return Self::parse_str_type(ident);
+                        return Self::parse_str(ident);
                     }
                     
                     // Handle bytes(n) syntax
                     if ident_str.starts_with("bytes") {
-                        return Self::parse_bytes_type(ident);
+                        return Self::parse_bytes(ident);
                     }
                     
                     // Handle rest keyword
@@ -140,14 +140,14 @@ impl Layout {
                     }
                 }
                 
-                Err(new_error(ty, "Unsupported field type"))
+                Err(fault(ty, "Unsupported field type"))
             }
-            _ => Err(new_error(ty, "Unsupported field type")),
+            _ => Err(fault(ty, "Unsupported field type")),
         }
     }
     
     /// Parse integer type with optional endian suffix
-    fn parse_integer_type(ident: &str) -> Option<(u8, bool, Option<Endian>)> {
+    fn parse_int(ident: &str) -> Option<(u8, bool, Option<Endian>)> {
         let (base, endian) = if ident.ends_with("_be") {
             (&ident[..ident.len() - 3], Some(Endian::Big))
         } else if ident.ends_with("_le") {
@@ -172,29 +172,29 @@ impl Layout {
     }
     
     /// Parse str(n) type
-    fn parse_str_type(ident: &Ident) -> Result<Kind, Error> {
+    fn parse_str(ident: &Ident) -> Result<Kind, Error> {
         let ident_str = ident.to_string();
         if !ident_str.starts_with("str(") || !ident_str.ends_with(")") {
-            return Err(new_error(ident, "Expected str(n) format"));
+            return Err(fault(ident, "Expected str(n) format"));
         }
         
         let size_str = &ident_str[4..ident_str.len() - 1];
         let size: usize = size_str.parse()
-            .map_err(|_| new_error(ident, "Invalid size in str(n)"))?;
+            .map_err(|_| fault(ident, "Invalid size in str(n)"))?;
         
         Ok(Kind::Str { size })
     }
     
     /// Parse bytes(n) type
-    fn parse_bytes_type(ident: &Ident) -> Result<Kind, Error> {
+    fn parse_bytes(ident: &Ident) -> Result<Kind, Error> {
         let ident_str = ident.to_string();
         if !ident_str.starts_with("bytes(") || !ident_str.ends_with(")") {
-            return Err(new_error(ident, "Expected bytes(n) format"));
+            return Err(fault(ident, "Expected bytes(n) format"));
         }
         
         let size_str = &ident_str[6..ident_str.len() - 1];
         let size: usize = size_str.parse()
-            .map_err(|_| new_error(ident, "Invalid size in bytes(n)"))?;
+            .map_err(|_| fault(ident, "Invalid size in bytes(n)"))?;
         
         Ok(Kind::Bytes { size })
     }

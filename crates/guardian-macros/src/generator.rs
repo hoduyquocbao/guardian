@@ -5,31 +5,31 @@ use quote::quote;
 use syn::Ident;
 
 use crate::definition::{Layout, Kind, Endian};
-use crate::error::Error;
+use crate::error::{fault, Error};
 
 /// Generate frame implementation from layout
-pub fn generate_frame(layout: &Layout) -> Result<TokenStream, Error> {
+pub fn generate(layout: &Layout) -> Result<TokenStream, Error> {
     let struct_name = &layout.name;
     let attributes = &layout.attributes;
     let fields = &layout.fields;
     
     // Calculate minimum size for fixed fields
-    let min_size = calculate_min_size(fields);
+    let min = calculate_min(fields);
     
     // Generate accessor methods
-    let mut accessor_methods = Vec::new();
+    let mut accessors = Vec::new();
     let mut offset = 0usize;
     
     for field in fields {
         let method = generate_accessor(field, offset)?;
-        accessor_methods.push(method);
+        accessors.push(method);
         
         // Update offset for next field
-        offset += field_size(field);
+        offset += size(field);
     }
     
     // Generate version method if specified
-    let version_method = if let Some(version) = attributes.version {
+    let version = if let Some(version) = attributes.version {
         quote! {
             pub fn version(&self) -> u8 {
                 #version
@@ -47,17 +47,17 @@ pub fn generate_frame(layout: &Layout) -> Result<TokenStream, Error> {
         }
         
         impl<'a> #struct_name<'a> {
-            pub fn new(source: &'a [u8]) -> Result<Self, guardian_store::Error> {
-                if source.len() < #min_size {
-                    return Err(guardian_store::Error::Format("Insufficient data".to_string()));
+            pub fn new(source: &'a [u8]) -> Result<Self, std::io::Error> {
+                if source.len() < #min {
+                    return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Insufficient data"));
                 }
                 
                 Ok(Self { source })
             }
             
-            #(#accessor_methods)*
+            #(#accessors)*
             
-            #version_method
+            #version
             
             pub fn size(&self) -> usize {
                 self.source.len()
@@ -73,9 +73,9 @@ fn generate_accessor(field: &crate::definition::Field, offset: usize) -> Result<
     let field_name = &field.name;
     let method_name = Ident::new(&field_name.to_string(), field_name.span());
     
-    let access_pattern = match &field.kind {
+    let access = match &field.kind {
         Kind::Integer { bits, signed, endian } => {
-            generate_integer_access(offset, *bits, *signed, endian)?
+            generate_int(offset, *bits, *signed, endian)?
         }
         Kind::Str { size } => {
             quote! {
@@ -95,17 +95,17 @@ fn generate_accessor(field: &crate::definition::Field, offset: usize) -> Result<
         }
     };
     
-    let return_type = generate_return_type(&field.kind);
+    let returns = generate_returns(&field.kind);
     
     Ok(quote! {
-        pub fn #method_name(&self) -> #return_type {
-            #access_pattern
+        pub fn #method_name(&self) -> #returns {
+            #access
         }
     })
 }
 
 /// Generate integer access pattern
-fn generate_integer_access(offset: usize, bits: u8, signed: bool, endian: &Option<Endian>) -> Result<TokenStream, Error> {
+fn generate_int(offset: usize, bits: u8, signed: bool, endian: &Option<Endian>) -> Result<TokenStream, Error> {
     let bytes = (bits / 8) as usize;
     let endian_expr = match endian {
         Some(Endian::Big) => quote! { from_be_bytes },
@@ -119,7 +119,7 @@ fn generate_integer_access(offset: usize, bits: u8, signed: bool, endian: &Optio
             16 => quote! { i16 },
             32 => quote! { i32 },
             64 => quote! { i64 },
-            _ => return Err(crate::error::new_error(offset, "Unsupported integer size")),
+            _ => return Err(fault(offset, "Unsupported integer size")),
         }
     } else {
         match bits {
@@ -127,7 +127,7 @@ fn generate_integer_access(offset: usize, bits: u8, signed: bool, endian: &Optio
             16 => quote! { u16 },
             32 => quote! { u32 },
             64 => quote! { u64 },
-            _ => return Err(crate::error::new_error(offset, "Unsupported integer size")),
+            _ => return Err(fault(offset, "Unsupported integer size")),
         }
     };
     
@@ -143,7 +143,7 @@ fn generate_integer_access(offset: usize, bits: u8, signed: bool, endian: &Optio
 }
 
 /// Generate return type for a field
-fn generate_return_type(kind: &Kind) -> TokenStream {
+fn generate_returns(kind: &Kind) -> TokenStream {
     match kind {
         Kind::Integer { bits, signed, .. } => {
             if *signed {
@@ -171,20 +171,20 @@ fn generate_return_type(kind: &Kind) -> TokenStream {
 }
 
 /// Calculate minimum size for fixed fields
-fn calculate_min_size(fields: &[crate::definition::Field]) -> usize {
+fn calculate_min(fields: &[crate::definition::Field]) -> usize {
     fields.iter()
         .filter_map(|field| {
             if matches!(field.kind, Kind::Rest) {
                 None
             } else {
-                Some(field_size(field))
+                Some(size(field))
             }
         })
         .sum()
 }
 
 /// Get size of a field
-fn field_size(field: &crate::definition::Field) -> usize {
+fn size(field: &crate::definition::Field) -> usize {
     match &field.kind {
         Kind::Integer { bits, .. } => (*bits / 8) as usize,
         Kind::Str { size } => *size,

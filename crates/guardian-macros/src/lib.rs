@@ -10,7 +10,7 @@ mod generator;
 mod error;
 
 use definition::Layout;
-use generator::generate_frame;
+use generator::generate;
 
 /// Procedural macro for defining binary frame layouts
 /// 
@@ -22,12 +22,11 @@ use generator::generate_frame;
 /// ```rust
 /// use guardian_macros::frame;
 /// 
-/// #[frame(version = 1, endian = "be")]
+/// #[frame]
 /// pub struct Packet {
 ///     id: u32,
 ///     kind: u16,
-///     name: str(16),
-///     payload: rest,
+///     data: rest,
 /// }
 /// ```
 #[proc_macro_attribute]
@@ -39,7 +38,7 @@ pub fn frame(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
     
     // Generate the frame implementation
-    match generate_frame(&layout) {
+    match generate(&layout) {
         Ok(tokens) => tokens.into(),
         Err(error) => error.into_compile_error().into(),
     }
