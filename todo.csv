@@ -1,0 +1,11 @@
+ID,Context,Module,Task,Priority,Status,Assignee,Due,Notes
+T-001,core,storage,"Fix find_owned method calls in tests and benchmarks",Critical,Open,Guardian,,"Replace all find_owned calls with find method in integration_test.rs and storage_benchmarks.rs"
+T-002,core,protocol,"Complete str(n) and bytes(n) parsing in guardian-macros",High,Open,Guardian,,"Implement parsing for str(n) and bytes(n) syntax in definition.rs and generator.rs"
+T-003,core,protocol,"Implement attribute parsing in guardian-macros",High,Open,Guardian,,"Add proper parsing for version, endian, check attributes in definition.rs"
+T-004,core,protocol,"Set up trybuild tests for guardian-macros",Medium,Open,Guardian,,"Create comprehensive UI tests using trybuild for both success and failure cases"
+T-005,core,storage,"Implement atomic segment replacement in compaction",Medium,Open,Guardian,,"Add atomic replacement logic for major compaction to ensure data consistency"
+T-006,core,storage,"Add checksum calculation for segment headers",Low,Open,Guardian,,"Implement checksum calculation and validation for segment file integrity"
+T-007,core,storage,"Optimize index file deletion operations",Low,Open,Guardian,,"Implement efficient deletion by rewriting index file without deleted entries"
+T-008,core,storage,"Add comprehensive error handling for edge cases",Medium,Open,Guardian,,"Handle file corruption, disk full, and other edge cases in storage operations"
+T-009,core,storage,"Implement schema evolution support",High,Open,Guardian,,"Add proper schema versioning and migration support for data model changes"
+T-010,core,storage,"Add performance benchmarks for all operations",Medium,Open,Guardian,,"Create comprehensive benchmarks for read, write, delete, and scan operations" 

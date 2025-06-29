@@ -1,0 +1,15 @@
+[package]
+name = "guardian-macros"
+version = "1.0.0"
+edition = "2021"
+authors = ["Guardian <architect@guardian-store.com>"]
+description = "Procedural macros for Guardian-Store"
+license = "MIT"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0" 

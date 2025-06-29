@@ -1,0 +1,6 @@
+| File | Line (ms) | AST (ms) | Total (ms) | Peak (KB) | Violations | Error | Warning |
+|------|-----------|----------|-----------|----------|------------|-------|---------|
+| src/lib.rs | 6 | 0 | 7 | 0 | 0 |  |  |
+| src/error.rs | 6 | 0 | 7 | 0 | 6 |  |  |
+| src/generator.rs | 7 | 4 | 11 | 0 | 23 |  |  |
+| src/definition.rs | 7 | 5 | 13 | 7811072 | 29 |  | HighMem |

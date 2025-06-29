@@ -1,0 +1,9 @@
+ID,Context,Module,Decision,Alternatives,Impact,Timestamp
+D-001,core,workspace,"Use workspace with multiple crates","Single crate with modules","Better separation of concerns, independent versioning, clearer boundaries",2025-06-29T23:15:00Z
+D-002,core,protocol,"Implement custom proc-macro instead of using existing solutions","Use serde, bincode, or other serialization libraries","Full control over binary format, single-word philosophy compliance, zero external dependencies",2025-06-29T23:20:00Z
+D-003,core,storage,"Replace RocksDB with custom binary index","Keep RocksDB, use other embedded databases","Eliminate external dependencies, reduce complexity, full control over storage format",2025-06-29T23:30:00Z
+D-004,core,storage,"Use rkyv for serialization","Use serde, bincode, or manual serialization","Zero-copy deserialization, high performance, compile-time safety",2025-06-29T23:35:00Z
+D-005,core,storage,"Implement segment-based storage","Single file storage, log-structured merge trees","Efficient compaction, better performance for large datasets, easier backup",2025-06-29T23:40:00Z
+D-006,core,protocol,"Use single-word identifiers throughout","Allow compound words, use descriptive names","Architectural consistency, reduced cognitive load, easier maintenance",2025-06-29T23:45:00Z
+D-007,core,storage,"Use thiserror for error handling","Manual error types, anyhow","Type-safe error handling, good integration with Rust ecosystem",2025-06-29T23:50:00Z
+D-008,core,storage,"Implement async compaction","Synchronous compaction, background threads","Non-blocking operations, better resource utilization",2025-06-29T23:55:00Z 
