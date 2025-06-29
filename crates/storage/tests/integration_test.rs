@@ -58,7 +58,7 @@ fn test_batch_operations() -> Result<()> {
     let users: Vec<User> = (1..=10).map(create_test_user).collect();
     
     // Save all users in batch
-    store.batch_save(&users)?;
+    store.batch(&users)?;
     
     // Verify all users exist
     for user in &users {
@@ -73,7 +73,7 @@ fn test_batch_operations() -> Result<()> {
 #[test]
 fn test_zero_copy_access() -> Result<()> {
     let temp_dir = TempDir::new()?;
-    let store = Store::new(temp_dir.path())?;
+    let mut store = Store::new(temp_dir.path())?;
     
     // Create and save a user
     let user = create_test_user(1);
@@ -93,7 +93,7 @@ fn test_zero_copy_access() -> Result<()> {
 #[test]
 fn test_scan_operations() -> Result<()> {
     let temp_dir = TempDir::new()?;
-    let store = Store::new(temp_dir.path())?;
+    let mut store = Store::new(temp_dir.path())?;
     
     // Create multiple users
     let users: Vec<User> = (1..=5).map(create_test_user).collect();

@@ -12,10 +12,10 @@ use crate::{Error, Result};
 use crate::model::{Position, Header, Metadata};
 
 /// Magic number for segment file validation
-const SEGMENT_MAGIC: u32 = 0x47535452; // "GSTR"
+const MAGIC: u32 = 0x47535452; // "GSTR"
 
 /// Maximum segment size in bytes (256MB)
-const MAX_SEGMENT_SIZE: u64 = 256 * 1024 * 1024;
+const MAXSIZE: u64 = 256 * 1024 * 1024;
 
 /// Manages segment-based storage operations
 pub struct Segment {
@@ -35,7 +35,7 @@ impl Segment {
         let base = base.as_ref().to_path_buf();
         std::fs::create_dir_all(&base)?;
         
-        let current = Self::find_next_segment(&base)?;
+        let current = Self::find_next(&base)?;
         let metadata = Metadata {
             id: current,
             created: std::time::SystemTime::now()
@@ -59,13 +59,13 @@ impl Segment {
     where
         T: rkyv::Serialize<rkyv::ser::serializers::AllocSerializer<1024>>,
     {
-        let mut file = self.ensure_file()?;
+        let mut file = self.open()?;
         let mut metadata = self.metadata.lock().unwrap();
         
         // Check if we need to rotate to a new segment
-        if metadata.bytes >= MAX_SEGMENT_SIZE {
+        if metadata.bytes >= MAXSIZE {
             self.rotate()?;
-            file = self.ensure_file()?;
+            file = self.open()?;
             metadata = self.metadata.lock().unwrap();
         }
         
@@ -123,7 +123,7 @@ impl Segment {
     }
     
     /// Ensures the current segment file is open
-    fn ensure_file(&self) -> Result<File> {
+    fn open(&self) -> Result<File> {
         let mut file_guard = self.file.lock().unwrap();
         
         if file_guard.is_none() {
@@ -140,7 +140,7 @@ impl Segment {
             if file.metadata()?.len() == 0 {
                 let metadata = self.metadata.lock().unwrap();
                 let header = Header {
-                    magic: SEGMENT_MAGIC,
+                    magic: MAGIC,
                     metadata: metadata.clone(),
                     checksum: 0, // TODO: Implement checksum calculation
                 };
@@ -183,7 +183,7 @@ impl Segment {
     }
     
     /// Finds the next available segment ID
-    fn find_next_segment(base: &Path) -> Result<u64> {
+    fn find_next(base: &Path) -> Result<u64> {
         let mut max_id = 0u64;
         
         if base.exists() {

@@ -23,8 +23,8 @@ pub struct Store {
 
 impl Store {
     /// Creates a new store instance
-    pub fn new<P: AsRef<Path>>(base_path: P) -> Result<Self> {
-        let base = base_path.as_ref();
+    pub fn new<P: AsRef<Path>>(base: P) -> Result<Self> {
+        let base = base.as_ref();
         let segment_path = base.join("segments");
         let index_path = base.join("index");
         
@@ -39,7 +39,7 @@ impl Store {
     }
     
     /// Saves a user to storage
-    pub fn save(&self, user: &User) -> Result<()> {
+    pub fn save(&mut self, user: &User) -> Result<()> {
         // Append to segment
         let position = self.segment.append(user)?;
         
@@ -80,7 +80,7 @@ impl Store {
     }
     
     /// Performs batch save operations
-    pub fn batch_save(&mut self, users: &[User]) -> Result<()> {
+    pub fn batch(&mut self, users: &[User]) -> Result<()> {
         let mut operations = Vec::with_capacity(users.len());
         
         for user in users {
@@ -117,20 +117,20 @@ impl Store {
     
     /// Gets storage statistics
     pub fn stats(&self) -> Result<Stats> {
-        let mut total_records = 0u64;
-        let total_segments = 0u64;
+        let mut total = 0u64;
+        let segments = 0u64;
         
         // Count records and segments
         for result in self.index.scan() {
             result?;
-            total_records += 1;
+            total += 1;
         }
         
         // TODO: Implement segment counting from filesystem
         
         Ok(Stats {
-            records: total_records,
-            segments: total_segments,
+            records: total,
+            segments,
         })
     }
     

@@ -204,6 +204,7 @@ impl Compaction {
                 removed += 1;
             }
         }
+        
         Ok((processed, removed))
     }
     
@@ -216,27 +217,26 @@ impl Compaction {
         let mut processed = 0u64;
         let mut removed = 0u64;
         
-        // Create temporary storage for new segments
-        let temp_path = format!("{}/temp_compact", base_path);
+        // Create temporary segment and index
+        let temp_path = format!("{}_temp", base_path);
         let temp_segment = Arc::new(Segment::new(&temp_path)?);
-        let temp_index = Arc::new(Mutex::new(Index::new(format!("{}/temp_index", temp_path))?));
+        let temp_index = Arc::new(Mutex::new(Index::new(format!("{}_index", temp_path))?));
         
-        // Scan all valid records
-        let index_guard = index.lock().await;
-        for result in index_guard.scan() {
-            let (key, position) = result?;
-            processed += 1;
-            
-            // Try to read the record
-            match segment.read::<User>(position) {
-                Ok(user) => {
-                    // Record is valid, write to new segment
+        // Copy valid records to temporary storage
+        {
+            let index_guard = index.lock().await;
+            for result in index_guard.scan() {
+                let (key, position) = result?;
+                processed += 1;
+                
+                if let Ok(user) = segment.read::<User>(position) {
+                    // Write to temporary segment
                     let new_position = temp_segment.append(&user)?;
+                    
+                    // Update temporary index
                     let mut temp_index_guard = temp_index.lock().await;
                     temp_index_guard.put(&key, new_position)?;
-                }
-                Err(_) => {
-                    // Record is deleted, skip it
+                } else {
                     removed += 1;
                 }
             }
@@ -245,8 +245,8 @@ impl Compaction {
         // TODO: Implement atomic replacement of old segments with new ones
         // This would involve:
         // 1. Creating backup of current segments
-        // 2. Moving temp segments to main location
-        // 3. Updating index references
+        // 2. Moving temporary segments to final location
+        // 3. Updating the main index
         // 4. Cleaning up old segments
         
         Ok((processed, removed))

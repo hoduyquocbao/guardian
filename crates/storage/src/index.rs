@@ -31,7 +31,7 @@ impl Entry {
         }
     }
     
-    fn from_bytes(data: &[u8]) -> Result<Self> {
+    fn unpack(data: &[u8]) -> Result<Self> {
         if data.len() < 29 { // minimum size: 1 + 4 + 8 + 8 + 8
             return Err(Error::Format("Entry data too short".to_string()));
         }
@@ -64,7 +64,7 @@ impl Entry {
         })
     }
     
-    fn to_bytes(&self) -> Vec<u8> {
+    fn pack(&self) -> Vec<u8> {
         let mut data = Vec::new();
         
         // Version
@@ -114,17 +114,20 @@ impl Index {
     }
     
     /// Stores a key-position mapping
-    pub fn put(&self, key: &[u8], position: Position) -> Result<()> {
-        let mut file = self.ensure_file()?;
+    pub fn put(&mut self, key: &[u8], position: Position) -> Result<()> {
+        let mut file = self.open()?;
         
         // Create entry
         let entry = Entry::new(key, position);
-        let entry_data = entry.to_bytes();
+        let entry_data = entry.pack();
         
         // Write entry length and data
         file.write_all(&(entry_data.len() as u32).to_le_bytes())?;
         file.write_all(&entry_data)?;
         file.flush()?;
+        
+        // Update cache
+        self.cache.insert(key.to_vec(), position);
         
         Ok(())
     }
@@ -146,7 +149,7 @@ impl Index {
                 file.read_exact(&mut entry_data)?;
                 
                 // Parse entry
-                let entry = Entry::from_bytes(&entry_data)?;
+                let entry = Entry::unpack(&entry_data)?;
                 
                 if entry.key == key {
                     let position = Position {
@@ -175,13 +178,13 @@ impl Index {
     
     /// Performs batch operations for better performance
     pub fn batch(&mut self, operations: Vec<Operation>) -> Result<()> {
-        let mut file = self.ensure_file()?;
+        let mut file = self.open()?;
         
         for op in operations {
             match op {
                 Operation::Put { key, position } => {
                     let entry = Entry::new(&key, position);
-                    let entry_data = entry.to_bytes();
+                    let entry_data = entry.pack();
                     file.write_all(&(entry_data.len() as u32).to_le_bytes())?;
                     file.write_all(&entry_data)?;
                 }
@@ -204,34 +207,37 @@ impl Index {
         })
     }
     
-    /// Ensures the index file is open
-    fn ensure_file(&self) -> Result<File> {
-        if let Some(ref file) = self.file {
+    /// Ensures the index file is open and ready for writing
+    fn open(&self) -> Result<File> {
+        if let Some(file) = &self.file {
             Ok(file.try_clone()?)
         } else {
             let file = OpenOptions::new()
                 .create(true)
                 .write(true)
-                .read(true)
+                .append(true)
                 .open(&self.path)?;
             Ok(file)
         }
     }
     
-    /// Loads existing index data into cache
+    /// Loads existing index data into memory
     fn load(&mut self) -> Result<()> {
         if !self.path.exists() {
             return Ok(());
         }
         
-        let mut file = File::open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(&self.path)?;
+        
+        file.seek(SeekFrom::Start(0))?;
         
         while let Ok(entry_len) = self.read_u32(&mut file) {
             let mut entry_data = vec![0u8; entry_len as usize];
             file.read_exact(&mut entry_data)?;
             
-            // Parse entry
-            let entry = Entry::from_bytes(&entry_data)?;
+            let entry = Entry::unpack(&entry_data)?;
             let position = Position {
                 segment: entry.segment,
                 offset: entry.offset,
@@ -241,18 +247,21 @@ impl Index {
             self.cache.insert(entry.key, position);
         }
         
+        // Keep file open for future operations
+        self.file = Some(file);
+        
         Ok(())
     }
     
     /// Reads a u32 from file
     fn read_u32(&self, file: &mut File) -> Result<u32> {
-        let mut bytes = [0u8; 4];
-        file.read_exact(&mut bytes)?;
-        Ok(u32::from_le_bytes(bytes))
+        let mut buf = [0u8; 4];
+        file.read_exact(&mut buf)?;
+        Ok(u32::from_le_bytes(buf))
     }
 }
 
-/// Represents an index operation
+/// Index operation types
 pub enum Operation {
     /// Put operation
     Put {

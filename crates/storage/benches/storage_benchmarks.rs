@@ -36,7 +36,7 @@ fn benchmark_write(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("single_write", size), size, |b, &size| {
             b.iter(|| {
                 let temp_dir = TempDir::new().unwrap();
-                let store = Store::new(temp_dir.path()).unwrap();
+                let mut store = Store::new(temp_dir.path()).unwrap();
                 let user = create_benchmark_user(size);
                 store.save(&user).unwrap();
             });
@@ -52,7 +52,7 @@ fn benchmark_read(c: &mut Criterion) {
     for size in [10, 100, 1000].iter() {
         group.bench_with_input(BenchmarkId::new("single_read", size), size, |b, &size| {
             let temp_dir = TempDir::new().unwrap();
-            let store = Store::new(temp_dir.path()).unwrap();
+            let mut store = Store::new(temp_dir.path()).unwrap();
             let user = create_benchmark_user(size);
             store.save(&user).unwrap();
             
@@ -74,7 +74,7 @@ fn benchmark_batch_write(c: &mut Criterion) {
                 let temp_dir = TempDir::new().unwrap();
                 let mut store = Store::new(temp_dir.path()).unwrap();
                 let users: Vec<User> = (0..size).map(create_benchmark_user).collect();
-                store.batch_save(&users).unwrap();
+                store.batch(&users).unwrap();
             });
         });
     }
