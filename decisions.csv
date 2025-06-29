@@ -1,6 +1,6 @@
-ID,Context,Module,Decision,Alternatives,Impact,Timestamp
-D-001,core,workspace,"Use workspace with multiple crates","Single crate with modules","Better separation of concerns, independent versioning, clearer boundaries",2025-06-29T23:15:00Z
-D-002,core,protocol,"Implement custom proc-macro instead of using existing solutions","Use serde, bincode, or other serialization libraries","Full control over binary format, single-word philosophy compliance, zero external dependencies",2025-06-29T23:20:00Z
+ID,Context,Module,Decision,Alternatives,Impact,Timestamp,Date,Rationale
+D-001,core,workspace,"Use workspace with multiple crates","Single crate with modules","Better separation of concerns, independent versioning, clearer boundaries",2025-06-29T23:15:00Z,2025-06-29,Đảm bảo sự nhất quán, thanh lịch, loại bỏ nợ kỹ thuật định danh,Toàn bộ codebase sạch, sẵn sàng phát triển macro
+D-002,core,protocol,"Implement custom proc-macro instead of using existing solutions","Use serde, bincode, or other serialization libraries","Full control over binary format, single-word philosophy compliance, zero external dependencies",2025-06-29T23:20:00Z,2025-06-30,Chính thức chuyển sang giai đoạn triển khai guardian-macros MVP sau khi refactor định danh hoàn tất,Đảm bảo nền tảng kiến trúc sạch trước khi phát triển tính năng mới,Giảm rủi ro tích lũy nợ kỹ thuật, tăng tốc phát triển macro
 D-003,core,storage,"Replace RocksDB with custom binary index","Keep RocksDB, use other embedded databases","Eliminate external dependencies, reduce complexity, full control over storage format",2025-06-29T23:30:00Z
 D-004,core,storage,"Use rkyv for serialization","Use serde, bincode, or manual serialization","Zero-copy deserialization, high performance, compile-time safety",2025-06-29T23:35:00Z
 D-005,core,storage,"Implement segment-based storage","Single file storage, log-structured merge trees","Efficient compaction, better performance for large datasets, easier backup",2025-06-29T23:40:00Z

@@ -18,4 +18,22 @@ Stats,storage,Statistics,"Storage system statistics","Contains record and segmen
 State,storage,CompactionState,"Compaction process state","Contains status and progress information"
 Config,storage,CompactionConfig,"Compaction configuration","Contains threshold and interval settings"
 Status,storage,CompactionStatus,"Compaction status enum","Idle, Minor, Major, Error states"
-Error,storage,ErrorType,"Error classification","Various error types for different failure modes" 
+Error,storage,ErrorType,"Error classification","Various error types for different failure modes"
+old,new,meaning
+batch_save,batch,Lưu nhiều bản ghi cùng lúc
+from_bytes,unpack,Chuyển bytes thành struct
+MAX_SEGMENT_SIZE,MAXSIZE,Hằng số kích thước segment tối đa
+SEGMENT_MAGIC,MAGIC,Hằng số magic kiểm tra file segment
+base_path,base,Đường dẫn gốc
+minor_compact,minor,Compaction nhỏ
+major_compact,major,Compaction lớn
+return_type,returns,Kiểu trả về
+accessor_methods,accessors,Danh sách hàm truy cập
+min_size,min,Kích thước tối thiểu
+schema_cache,cache,Bộ nhớ tạm schema
+field_size,size,Kích thước trường
+entry_data,data,Dữ liệu entry
+key_len,len,Độ dài key
+key_start,start,Vị trí bắt đầu key
+key_end,end,Vị trí kết thúc key
+pos_start,start,Vị trí bắt đầu position 

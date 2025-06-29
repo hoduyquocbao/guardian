@@ -1,127 +1,41 @@
-# Guardian-Store
+# Guardian Store
 
-High-performance storage system with architectural elegance, built on the single-word identifier philosophy.
+## Triết lý Kiến trúc
 
-## Architecture
+- **Mọi định danh (biến, hàm, type, module, const) phải là MỘT TỪ TIẾNG ANH**
+- Cấu trúc module cung cấp ngữ cảnh, loại bỏ sự mơ hồ mà không cần tên dài dòng
+- Refactor định kỳ để loại bỏ mọi nợ định danh, đảm bảo sự thanh lịch và nhất quán
 
-Guardian-Store is organized as a Rust workspace with multiple crates:
+## Quy tắc Định danh
 
-- **`crates/storage`**: Main storage system with segment-based storage, custom binary index, and zero-copy serialization
-- **`crates/guardian-macros`**: Procedural macros for defining binary layouts with the `#[frame]` attribute
+- Không sử dụng snake_case, PascalCase, hay SCREAMING_SNAKE_CASE cho bất kỳ định danh nào
+- Ví dụ refactor:
+  - `batch_save` → `batch`
+  - `from_bytes` → `unpack`
+  - `MAX_SEGMENT_SIZE` → `MAXSIZE`
+  - `base_path` → `base`
 
-## Key Features
+## Roadmap mới
 
-### Storage System
-- **Segment-based storage**: Immutable segment files for efficient data management
-- **Custom binary index**: High-performance key-value lookups without external dependencies
-- **Zero-copy serialization**: Using rkyv for maximum performance
-- **Async compaction**: Background compaction for optimal storage efficiency
-- **Schema evolution**: Support for evolving data models over time
+1. **Refactor toàn bộ định danh trong storage và guardian-macros** (ĐÃ HOÀN THÀNH)
+2. **Triển khai guardian-macros MVP**: parser, generator, trybuild test UI
+3. **Mở rộng tính năng macro**: hỗ trợ nhiều kiểu, endianness, version, nesting
 
-### Proc-Macro System
-- **`#[frame]` attribute**: Declarative binary layout definition
-- **Single-word philosophy**: All identifiers follow the one-word rule for maximum clarity
-- **Type safety**: Compile-time validation of binary layouts
-- **Endianness control**: Configurable byte ordering per field
+## Kiểm thử & CI
 
-## Single-Word Identifier Philosophy
+- Sử dụng script `naming.sh` để kiểm tra định danh toàn bộ workspace
+- Tích hợp kiểm tra naming vào CI để ngăn chặn nợ định danh mới
+- Tất cả macro phải có test UI với trybuild (pass/fail)
 
-This project follows a strict single-word identifier philosophy:
+## PKB & Tài liệu
 
-- All structs, enums, functions, and variables use exactly one English word
-- Compound concepts are broken down into simpler, atomic components
-- The vocabulary is standardized across the entire codebase
-- This approach reduces cognitive load and improves code clarity
+- Mọi quyết định, chỉ thị, thay đổi lớn đều được ghi nhận trong:
+  - `memories.csv` (tri thức, milestone)
+  - `todo.csv` (nhiệm vụ, chỉ thị)
+  - `decisions.csv` (quyết định kiến trúc)
+  - `vocabulary.csv` (từ điển định danh)
 
-### Vocabulary Standardization
-
-Key terms are defined in `vocabulary.csv`:
-- `Layout`: Binary layout specification (was FrameDefinition)
-- `Field`: Individual field within a layout (was FieldDefinition)
-- `Kind`: Field type classification (was FieldType)
-- `Position`: Storage location information (was StorageLocation)
-- `Segment`: Immutable storage file unit (was StorageSegment)
-
-## Project Structure
-
-```
-agents/
-├── Cargo.toml                 # Workspace manifest
-├── crates/
-│   ├── storage/              # Main storage system
-│   │   ├── src/
-│   │   ├── benches/
-│   │   ├── tests/
-│   │   └── Cargo.toml
-│   └── guardian-macros/      # Proc-macro system
-│       ├── src/
-│       ├── tests/
-│       └── Cargo.toml
-├── memories.csv              # Architectural decisions and context
-├── todo.csv                  # Task management
-├── decisions.csv             # Design decisions and rationale
-└── vocabulary.csv            # Standardized vocabulary
-```
-
-## Development Status
-
-### Completed
-- ✅ Workspace restructuring with multiple crates
-- ✅ Custom binary index implementation (replacing RocksDB)
-- ✅ Segment-based storage with rkyv serialization
-- ✅ Proc-macro architecture with single-word identifiers
-- ✅ Comprehensive error handling system
-- ✅ Async compaction service
-
-### In Progress
-- 🔄 Proc-macro feature completion (str(n), bytes(n) parsing)
-- 🔄 Attribute parsing implementation
-- 🔄 Test and benchmark fixes
-
-### Planned
-- 📋 Trybuild UI tests for proc-macro
-- 📋 Atomic segment replacement in compaction
-- 📋 Checksum calculation for data integrity
-- 📋 Schema evolution support
-- 📋 Performance optimization
-
-## Building
-
-```bash
-# Build all crates
-cargo build
-
-# Build specific crate
-cargo build -p guardian-store
-cargo build -p guardian-macros
-
-# Run tests
-cargo test
-
-# Run benchmarks
-cargo bench
-```
-
-## Usage
-
-### Storage System
-
-```rust
-use guardian_store::{Store, User};
-
-// Create store
-let store = Store::new("./data")?;
-
-// Save user
-let user = User { /* ... */ };
-store.save(&user)?;
-
-// Find user
-let found = store.find(123)?;
-```
-
-### Proc-Macro
-
+## Ví dụ sử dụng macro
 ```rust
 use guardian_macros::frame;
 
@@ -130,20 +44,10 @@ pub struct Packet {
     id: u32,
     data: rest,
 }
-
-// Generated struct provides zero-copy access
-let packet = Packet::new(&data)?;
-let id = packet.id();
-let data = packet.data();
 ```
 
-## Contributing
-
-1. Follow the single-word identifier philosophy
-2. Update vocabulary.csv for new terms
-3. Document decisions in decisions.csv
-4. Add tasks to todo.csv
-5. Maintain architectural consistency
+## Đóng góp
+- Mọi pull request phải tuân thủ triết lý một từ và có kiểm thử định danh tự động.
 
 ## License
 

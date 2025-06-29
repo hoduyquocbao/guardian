@@ -12,4 +12,6 @@ T-010,core,storage,"Add performance benchmarks for all operations",Medium,Open,G
 T-011,refactoring,all,"EPIC: Refactor all naming violations in storage and guardian-macros crates",Critical,Open,Guardian,,"Address all snake_case and PascalCase violations identified in naming reports. This must be completed before T-012."
 T-012,core,protocol,"EPIC: Implement guardian-macros v0.1 (MVP)",Critical,Blocked,Guardian,,"Depends on T-011. Covers Milestone 1: Set up project, implement basic parsing/generation for u32/u64/rest, and set up trybuild tests."
 T-013,core,protocol,"Sub-Task: Milestone 2 - Feature Parity",High,Blocked,Guardian,,"Depends on T-012. Implement full integer/endian support, str(N), and bytes(N)."
-T-014,core,protocol,"Sub-Task: Milestone 3 - Advanced Features",Medium,Blocked,Guardian,,"Depends on T-013. Implement version and check attributes, and research nesting." 
+T-014,core,protocol,"Sub-Task: Milestone 3 - Advanced Features",Medium,Blocked,Guardian,,"Depends on T-013. Implement version and check attributes, and research nesting."
+T-017,refactoring,all,"EPIC: Refactor all naming violations in 'storage' and 'guardian-macros' crates.",Critical,Open,Guardian,,"BLOCKER. Address all 'snake_case' and 'PascalCase' violations identified in naming reports [sources 27, 28, 29, 30, 31]."
+T-018,core,protocol,"Sub-Task: Milestone 1 - Setup 'trybuild' Test Harness",Critical,Blocked,Guardian,,"Depends on T-017. As part of the MVP, create the 'tests/ui' directory and initial 'pass' and 'fail' test cases." 
